@@ -11,7 +11,7 @@ local function createBox()
     for i = 1, 12 do
         local line = Drawing.new("Line")
         line.Color = Color3.new(1, 0, 0)
-        line.Thickness = 3
+        line.Thickness = 2.5
         line.Transparency = 1
         box[i] = line
     end
@@ -20,7 +20,7 @@ end
 
 local function updateBox(box, position, size)
     -- Scale down the size
-    local scaleFactor = 0.6
+    local scaleFactor = 0.69
     size = size * scaleFactor
     
     local corners = {
