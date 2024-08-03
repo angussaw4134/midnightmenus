@@ -1,4 +1,4 @@
--- Made by TheEvilDeveloper
+
  
 local Player = game:GetService("Players").LocalPlayer
 local UserInputService = game:GetService("UserInputService")
