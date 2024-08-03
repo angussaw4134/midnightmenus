@@ -1,0 +1,55 @@
+--MidnightMenus Rivals Internal v1.3.lua--
+
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({IntroText = "By Midnight Menus",Name = "Rivals Internal v1.3", HidePremium = false, SaveConfig = true, ConfigFolder = "MidnightRivals"})
+
+local Tab = Window:MakeTab({
+	Name = "Local",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+Tab:AddButton({
+	Name = "Aimbot / Tapfire",
+	Callback = function()
+      		print("Aimbot On")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/zaaimbot')))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Esp ",
+	Callback = function()
+      		print("button pressed")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/Corneresp')))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = " Trigget Bot snipe no work(NEEDS AIMBOT)",
+	Callback = function()
+      		print("Aimbot On")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/pis')))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = " No Clip Fly",
+	Callback = function()
+      		print("Aimbot On")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/flkydsad')))()
+  	end    
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
