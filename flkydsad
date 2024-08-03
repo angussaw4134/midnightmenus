@@ -5,7 +5,7 @@ local StarterGui = game:GetService("StarterGui")
 local Lighting = game:GetService("Lighting"
 local Camera = game:GetService("Workspace").CurrentCamera
  
-local Fly = false
+local Fly = true
 local FlyPart = nil
 local FlySpeed = 75
  
