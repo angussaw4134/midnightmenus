@@ -32,7 +32,7 @@ local RequiredDistance, Typing, Running, Animation, ServiceConnections = 2000, f
 Environment.Settings = {
 	Enabled = true,
 	TeamCheck = false,
-	AliveCheck = true,
+	AliveCheck = false,
 	WallCheck = false, -- Laggy
 	Sensitivity = 0.01, -- Animation length (in seconds) before fully locking onto target
 	ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
@@ -45,10 +45,10 @@ Environment.Settings = {
 Environment.FOVSettings = {
 	Enabled = true,
 	Visible = true,
-	Amount = 190,
+	Amount = 10000,
 	Color = Color3.fromRGB(255, 255, 255),
 	LockedColor = Color3.fromRGB(255, 70, 70),
-	Transparency = 0.5,
+	Transparency = 1,
 	Sides = 60,
 	Thickness = 1,
 	Filled = false
@@ -112,7 +112,7 @@ local function Load()
 			Environment.FOVCircle.Color = Environment.FOVSettings.Color
 			Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
 			Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
-			Environment.FOVCircle.Position = Vector2(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+			Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
 		else
 			Environment.FOVCircle.Visible = false
 		end
@@ -135,8 +135,7 @@ local function Load()
 					end
 				end
 
-			Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
-
+				Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
 			end
 		end
 	end)
@@ -176,7 +175,7 @@ function Environment.Functions:ResetSettings()
 		Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
 		ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
 		ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-		TriggerKey = "MouseButton2",
+		TriggerKey = "TouchTap",
 		Toggle = false,
 		LockPart = "Head" -- Body part to lock on
 	}
