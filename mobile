@@ -45,7 +45,7 @@ Environment.Settings = {
 Environment.FOVSettings = {
 	Enabled = true,
 	Visible = true,
-	Amount = 230,
+	Amount = 190,
 	Color = Color3.fromRGB(255, 255, 255),
 	LockedColor = Color3.fromRGB(255, 70, 70),
 	Transparency = 0.5,
@@ -112,7 +112,7 @@ local function Load()
 			Environment.FOVCircle.Color = Environment.FOVSettings.Color
 			Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
 			Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
-			Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+			Environment.FOVCircle.Position = Vector2(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 		else
 			Environment.FOVCircle.Visible = false
 		end
