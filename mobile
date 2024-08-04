@@ -25,14 +25,14 @@ local LocalPlayer = Players.LocalPlayer
 
 --// Variables
 
-local RequiredDistance, Typing, Running, Animation, ServiceConnections = 2000, false, false, nil, {}
+local RequiredDistance, Typing, Running, Animation, ServiceConnections = 2000, false, true, nil, {}
 
 --// Script Settings
 
 Environment.Settings = {
 	Enabled = true,
 	TeamCheck = false,
-	AliveCheck = false,
+	AliveCheck = true,
 	WallCheck = false, -- Laggy
 	Sensitivity = 0.01, -- Animation length (in seconds) before fully locking onto target
 	ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
@@ -117,7 +117,7 @@ local function Load()
 			Environment.FOVCircle.Visible = false
 		end
 
-		if Running and Environment.Settings.Enabled then
+		if Environment.Settings.Enabled then
 			GetClosestPlayer()
 
 			if Environment.Locked then
@@ -137,36 +137,6 @@ local function Load()
 
 			Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
 
-			end
-		end
-	end)
-
-	ServiceConnections.InputBeganConnection = UserInputService.TouchTap:Connect(function(Input)
-		if not Typing then
-			pcall(function()
-				if Environment.Settings.TriggerKey == "TouchTap" then
-					if Environment.Settings.Toggle then
-						Running = not Running
-
-						if not Running then
-							CancelLock()
-						end
-					else
-						Running = true
-					end
-				end
-			end)
-		end
-	end)
-
-	ServiceConnections.InputEndedConnection = UserInputService.TouchTap:Connect(function(Input)
-		if not Typing then
-			if not Environment.Settings.Toggle then
-				pcall(function()
-					if Environment.Settings.TriggerKey == "TouchTap" then
-						Running = false; CancelLock()
-					end
-				end)
 			end
 		end
 	end)
@@ -206,7 +176,7 @@ function Environment.Functions:ResetSettings()
 		Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
 		ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
 		ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-		TriggerKey = "TouchTap",
+		TriggerKey = "MouseButton2",
 		Toggle = false,
 		LockPart = "Head" -- Body part to lock on
 	}
