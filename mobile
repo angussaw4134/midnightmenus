@@ -50,7 +50,7 @@ Environment.FOVSettings = {
 	LockedColor = Color3.fromRGB(255, 70, 70),
 	Transparency = 1,
 	Sides = 60,
-	Thickness = 1,
+	Thickness = 0,
 	Filled = false
 }
 
