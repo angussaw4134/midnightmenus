@@ -1,21 +1,94 @@
---// Cache
+-- Load the Orion library
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
+-- Create the main window
+local Window = OrionLib:MakeWindow({Name = "Midnight Menus Internal 1.4", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+
+-- Create the 'Aimbot' tab
+local AimbotTab = Window:MakeTab({
+	Name = "Aimbot",
+	PremiumOnly = false
+})
+
+-- Create the 'ESP' tab
+local ESPTab = Window:MakeTab({
+	Name = "ESP",
+	PremiumOnly = false
+})
+
+-- Aimbot settings
+local aimbotEnabled = false
+local fovAmount = 90
+local maxDistance = 2000
+
+-- Aimbot Tab Content
+AimbotTab:AddToggle({
+	Name = "Enable Aimbot",
+	Default = false,
+	Callback = function(value)
+		aimbotEnabled = value
+		if not value then
+			CancelLock()
+		end
+	end
+})
+
+AimbotTab:AddSlider({
+	Name = "FOV",
+	Min = 0,
+	Max = 230,
+	Default = 90,
+	Increment = 1,
+	Callback = function(value)
+		fovAmount = value
+		Environment.FOVSettings.Amount = value
+	end
+})
+
+AimbotTab:AddSlider({
+	Name = "Max Distance",
+	Min = 0,
+	Max = 5000,
+	Default = 2000,
+	Increment = 1,
+	Callback = function(value)
+		maxDistance = value
+		RequiredDistance = value
+	end
+})
+
+-- ESP settings
+local espEnabled = false
+
+-- ESP Tab Content
+ESPTab:AddToggle({
+	Name = "Enable ESP",
+	Default = false,
+	Callback = function(value)
+		espEnabled = value
+		if value then
+			EnableESP()
+		else
+			DisableESP()
+		end
+	end
+})
+
+-- Aimbot Script
+--// Cache
 local select = select
 local pcall, getgenv, next, Vector2, mathclamp, type, mousemoverel = select(1, pcall, getgenv, next, Vector2.new, math.clamp, type, mousemoverel or (Input and Input.MouseMove))
 
 --// Preventing Multiple Processes
-
 pcall(function()
-    getgenv().Aimbot.Functions:Exit()
+	getgenv().Aimbot.Functions:Exit()
 end)
 
 --// Environment
-
 getgenv().Aimbot = {}
 local Environment = getgenv().Aimbot
 
 --// Services
-
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -24,245 +97,379 @@ local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 --// Variables
-
-local RequiredDistance, Typing, Running, Animation, ServiceConnections = 2000, false, false, nil, {}
+local RequiredDistance, Typing, Running, Animation, ServiceConnections = maxDistance, false, false, nil, {}
 
 --// Script Settings
-
 Environment.Settings = {
-    Enabled = true,
-    TeamCheck = false,
-    AliveCheck = false,
-    WallCheck = false, -- Laggy
-    Sensitivity = 0.01, -- Animation length (in seconds) before fully locking onto target
-    ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
-    ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-    TriggerKey = "MouseButton2",
-    Toggle = false,
-    LockPart = "Head" -- Body part to lock on
+	Enabled = aimbotEnabled,
+	TeamCheck = false,
+	AliveCheck = false,
+	WallCheck = false, -- Laggy
+	Sensitivity = 0.01, -- Animation length (in seconds) before fully locking onto target
+	ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
+	ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
+	TriggerKey = "MouseButton2",
+	Toggle = false,
+	LockPart = "Head" -- Body part to lock on
 }
 
 Environment.FOVSettings = {
-    Enabled = true,
-    Visible = true,
-    Amount = 230,
-    Color = Color3.fromRGB(255, 255, 255),
-    LockedColor = Color3.fromRGB(255, 70, 70),
-    Transparency = 0.5,
-    Sides = 60,
-    Thickness = 1,
-    Filled = false
+	Enabled = true,
+	Visible = true,
+	Amount = fovAmount,
+	Color = Color3.fromRGB(255, 255, 255),
+	LockedColor = Color3.fromRGB(255, 70, 70),
+	Transparency = 0.5,
+	Sides = 60,
+	Thickness = 1,
+	Filled = false
 }
 
 Environment.FOVCircle = Drawing.new("Circle")
 
 --// Functions
-
 local function CancelLock()
-    Environment.Locked = nil
-    if Animation then Animation:Cancel() end
-    Environment.FOVCircle.Color = Environment.FOVSettings.Color
+	Environment.Locked = nil
+	if Animation then Animation:Cancel() end
+	Environment.FOVCircle.Color = Environment.FOVSettings.Color
 end
 
 local function GetClosestPlayer()
-    if not Environment.Locked then
-        RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000)
+	if not Environment.Locked then
+		RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or maxDistance)
 
-        for _, v in next, Players:GetPlayers() do
-            if v ~= LocalPlayer then
-                if v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
-                    if Environment.Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
-                    if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
-                    if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+		for _, v in next, Players:GetPlayers() do
+			if v ~= LocalPlayer then
+				if v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
+					if Environment.Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
+					if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+					if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
 
-                    local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
-                    local Distance = (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Vector.X, Vector.Y)).Magnitude
+					local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
+					local Distance = (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Vector.X, Vector.Y)).Magnitude
 
-                    if Distance < RequiredDistance and OnScreen then
-                        RequiredDistance = Distance
-                        Environment.Locked = v
-                    end
-                end
-            end
-        end
-    elseif (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).X, Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).Y)).Magnitude > RequiredDistance then
-        CancelLock()
-    end
+					if Distance < RequiredDistance and OnScreen then
+						RequiredDistance = Distance
+						Environment.Locked = v
+					end
+				end
+			end
+		end
+	elseif (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).X, Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position).Y)).Magnitude > RequiredDistance then
+		CancelLock()
+	end
 end
 
 --// Typing Check
-
 ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
-    Typing = true
+	Typing = true
 end)
 
 ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
-    Typing = false
+	Typing = false
 end)
 
 --// Main
-
 local function Load()
-    ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
-        if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
-            Environment.FOVCircle.Radius = Environment.FOVSettings.Amount
-            Environment.FOVCircle.Thickness = Environment.FOVSettings.Thickness
-            Environment.FOVCircle.Filled = Environment.FOVSettings.Filled
-            Environment.FOVCircle.NumSides = Environment.FOVSettings.Sides
-            Environment.FOVCircle.Color = Environment.FOVSettings.Color
-            Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
-            Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
-            Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
-        else
-            Environment.FOVCircle.Visible = false
-        end
+	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
+		if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
+			Environment.FOVCircle.Radius = Environment.FOVSettings.Amount
+			Environment.FOVCircle.Thickness = Environment.FOVSettings.Thickness
+			Environment.FOVCircle.Filled = Environment.FOVSettings.Filled
+			Environment.FOVCircle.NumSides = Environment.FOVSettings.Sides
+			Environment.FOVCircle.Color = Environment.FOVSettings.Color
+			Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
+			Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
+			Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+		else
+			Environment.FOVCircle.Visible = false
+		end
 
-        if Running and Environment.Settings.Enabled and _G.Aimbot then
-            GetClosestPlayer()
+		if Running and Environment.Settings.Enabled then
+			GetClosestPlayer()
 
-            if Environment.Locked then
-                if Environment.Settings.ThirdPerson then
-                    Environment.Settings.ThirdPersonSensitivity = mathclamp(Environment.Settings.ThirdPersonSensitivity, 0.1, 5)
+			if Environment.Locked then
+				if Environment.Settings.ThirdPerson then
+					Environment.Settings.ThirdPersonSensitivity = mathclamp(Environment.Settings.ThirdPersonSensitivity, 0.1, 5)
 
-                    local Vector = Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position)
-                    mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * Environment.Settings.ThirdPersonSensitivity, (Vector.Y - UserInputService:GetMouseLocation().Y) * Environment.Settings.ThirdPersonSensitivity)
-                else
-                    if Environment.Settings.Sensitivity > 0 then
-                        Animation = TweenService:Create(Camera, TweenInfo.new(Environment.Settings.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)})
-                        Animation:Play()
-                    else
-                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)
-                    end
-                end
+					local Vector = Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position)
+					mousemoverel((Vector.X - UserInputService:GetMouseLocation().X) * Environment.Settings.ThirdPersonSensitivity, (Vector.Y - UserInputService:GetMouseLocation().Y) * Environment.Settings.ThirdPersonSensitivity)
+				else
+					if Environment.Settings.Sensitivity > 0 then
+						Animation = TweenService:Create(Camera, TweenInfo.new(Environment.Settings.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)})
+						Animation:Play()
+					else
+						Camera.CFrame = CFrame.new(Camera.CFrame.Position, Environment.Locked.Character[Environment.Settings.LockPart].Position)
+					end
+				end
 
-            Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
+				Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
+			end
+		end
+	end)
 
-            end
-        end
-    end)
+	ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
+		if not Typing then
+			pcall(function()
+				if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
+					if Environment.Settings.Toggle then
+						Running = not Running
 
-    ServiceConnections.InputBeganConnection = UserInputService.InputBegan:Connect(function(Input)
-        if not Typing then
-            pcall(function()
-                if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
-                    if Environment.Settings.Toggle then
-                        Running = not Running
+						if not Running then
+							CancelLock()
+						end
+					else
+						Running = true
+					end
+				end
+			end)
 
-                        if not Running then
-                            CancelLock()
-                        end
-                    else
-                        Running = true
-                    end
-                end
-            end)
+			pcall(function()
+				if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
+					if Environment.Settings.Toggle then
+						Running = not Running
 
-            pcall(function()
-                if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
-                    if Environment.Settings.Toggle then
-                        Running = not Running
+						if not Running then
+							CancelLock()
+						end
+					else
+						Running = true
+					end
+				end
+			end)
+		end
+	end)
 
-                        if not Running then
-                            CancelLock()
-                        end
-                    else
-                        Running = true
-                    end
-                end
-            end)
-        end
-    end)
+	ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
+		if not Typing then
+			if not Environment.Settings.Toggle then
+				pcall(function()
+					if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
+						Running = false; CancelLock()
+					end
+				end)
 
-    ServiceConnections.InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
-        if not Typing then
-            if not Environment.Settings.Toggle then
-                pcall(function()
-                    if Input.KeyCode == Enum.KeyCode[Environment.Settings.TriggerKey] then
-                        Running = false; CancelLock()
-                    end
-                end)
+				pcall(function()
+					if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
+						Running = false; CancelLock()
+					end
+				end)
+			end
+		end
+	end)
 
-                pcall(function()
-                    if Input.UserInputType == Enum.UserInputType[Environment.Settings.TriggerKey] then
-                        Running = false; CancelLock()
-                    end
-                end)
-            end
-        end
-    end)
+	-- // Config
+	OrionLib:SaveConfig()
+	OrionLib:LoadConfig()
 end
-
---// Functions
-
-Environment.Functions = {}
-
-function Environment.Functions:Exit()
-    for _, v in next, ServiceConnections do
-        v:Disconnect()
-    end
-
-    if Environment.FOVCircle.Remove then Environment.FOVCircle:Remove() end
-
-    getgenv().Aimbot.Functions = nil
-    getgenv().Aimbot = nil
-    
-    Load = nil; GetClosestPlayer = nil; CancelLock = nil
-end
-
-function Environment.Functions:Restart()
-    for _, v in next, ServiceConnections do
-        v:Disconnect()
-    end
-
-    Load()
-end
-
-function Environment.Functions:ResetSettings()
-    Environment.Settings = {
-        Enabled = true,
-        TeamCheck = false,
-        AliveCheck = true,
-        WallCheck = false,
-        Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
-        ThirdPerson = false, -- Uses mousemoverel instead of CFrame to support locking in third person (could be choppy)
-        ThirdPersonSensitivity = 3, -- Boundary: 0.1 - 5
-        TriggerKey = "MouseButton2",
-        Toggle = false,
-        LockPart = "Head" -- Body part to lock on
-    }
-
-    Environment.FOVSettings = {
-        Enabled = true,
-        Visible = true,
-        Amount = 90,
-        Color = Color3.fromRGB(255, 255, 255),
-        LockedColor = Color3.fromRGB(255, 70, 70),
-        Transparency = 0.5,
-        Sides = 60,
-        Thickness = 1,
-        Filled = false
-    }
-end
-
---// Load
 
 Load()
 
-_G.Aimbot = false
+-- ESP Script
+local Settings = {
+    Box_Color = Color3.fromRGB(255, 0, 0),
+    Box_Thickness = 2,
+    Team_Check = false,
+    Team_Color = true,
+    Autothickness = true
+}
 
-local function AimbotFunction()
-    if _G.Aimbot then
-        Load()
-    else
-        Environment.Functions:Exit()
+local Space = game:GetService("Workspace")
+local Player = game:GetService("Players").LocalPlayer
+local Camera = Space.CurrentCamera
+local ESPObjects = {}
+
+local function NewLine(color, thickness)
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.From = Vector2.new(0, 0)
+    line.To = Vector2.new(0, 0)
+    line.Color = color
+    line.Thickness = thickness
+    line.Transparency = 1
+    return line
+end
+
+local function Vis(lib, state)
+    for i, v in pairs(lib) do
+        v.Visible = state
     end
 end
 
-Tab:AddToggle({
-    Name = "Aimbot Toggle",
-    Default = false,
-    Callback = function(Value)
-        _G.Aimbot = Value
-        AimbotFunction()
-    end    
-})
+local function Colorize(lib, color)
+    for i, v in pairs(lib) do
+        v.Color = color
+    end
+end
+
+local Black = Color3.fromRGB(0, 0, 0)
+
+local function Rainbow(lib, delay)
+    for hue = 0, 1, 1/30 do
+        local color = Color3.fromHSV(hue, 0.6, 1)
+        Colorize(lib, color)
+        wait(delay)
+    end
+    Rainbow(lib)
+end
+
+local function Main(plr)
+    repeat wait() until plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil
+    local R15
+    if plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+        R15 = true
+    else 
+        R15 = false
+    end
+    local Library = {
+        TL1 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+        TL2 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+
+        TR1 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+        TR2 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+
+        BL1 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+        BL2 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+
+        BR1 = NewLine(Settings.Box_Color, Settings.Box_Thickness),
+        BR2 = NewLine(Settings.Box_Color, Settings.Box_Thickness)
+    }
+    coroutine.wrap(Rainbow)(Library, 0.15)
+    local oripart = Instance.new("Part")
+    oripart.Parent = Space
+    oripart.Transparency = 1
+    oripart.CanCollide = false
+    oripart.Size = Vector3.new(1, 1, 1)
+    oripart.Position = Vector3.new(0, 0, 0)
+
+    local function Updater()
+        local c 
+        c = game:GetService("RunService").RenderStepped:Connect(function()
+            if espEnabled and plr.Character ~= nil and plr.Character:FindFirstChild("Humanoid") ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") ~= nil and plr.Character.Humanoid.Health > 0 and plr.Character:FindFirstChild("Head") ~= nil then
+                local Hum = plr.Character
+                local HumPos, vis = Camera:WorldToViewportPoint(Hum.HumanoidRootPart.Position)
+                if vis then
+                    oripart.Size = Vector3.new(Hum.HumanoidRootPart.Size.X, Hum.HumanoidRootPart.Size.Y*1.5, Hum.HumanoidRootPart.Size.Z)
+                    oripart.CFrame = CFrame.new(Hum.HumanoidRootPart.CFrame.Position, Camera.CFrame.Position)
+                    local SizeX = oripart.Size.X
+                    local SizeY = oripart.Size.Y
+                    local TL = Camera:WorldToViewportPoint((oripart.CFrame * CFrame.new(SizeX, SizeY, 0)).p)
+                    local TR = Camera:WorldToViewportPoint((oripart.CFrame * CFrame.new(-SizeX, SizeY, 0)).p)
+                    local BL = Camera:WorldToViewportPoint((oripart.CFrame * CFrame.new(SizeX, -SizeY, 0)).p)
+                    local BR = Camera:WorldToViewportPoint((oripart.CFrame * CFrame.new(-SizeX, -SizeY, 0)).p)
+
+                    if Settings.Team_Check then
+                        if plr.TeamColor == Player.TeamColor then
+                            Colorize(Library, Color3.fromRGB(0, 255, 0))
+                        else 
+                            Colorize(Library, Color3.fromRGB(255, 0, 0))
+                        end
+                    end
+
+                    if Settings.Team_Color then
+                        Colorize(Library, plr.TeamColor.Color)
+                    end
+
+                    local ratio = (Camera.CFrame.p - Hum.HumanoidRootPart.Position).magnitude
+                    local offset = math.clamp(1/ratio*750, 2, 300)
+
+                    Library.TL1.From = Vector2.new(TL.X, TL.Y)
+                    Library.TL1.To = Vector2.new(TL.X + offset, TL.Y)
+                    Library.TL2.From = Vector2.new(TL.X, TL.Y)
+                    Library.TL2.To = Vector2.new(TL.X, TL.Y + offset)
+
+                    Library.TR1.From = Vector2.new(TR.X, TR.Y)
+                    Library.TR1.To = Vector2.new(TR.X - offset, TR.Y)
+                    Library.TR2.From = Vector2.new(TR.X, TR.Y)
+                    Library.TR2.To = Vector2.new(TR.X, TR.Y + offset)
+
+                    Library.BL1.From = Vector2.new(BL.X, BL.Y)
+                    Library.BL1.To = Vector2.new(BL.X + offset, BL.Y)
+                    Library.BL2.From = Vector2.new(BL.X, BL.Y)
+                    Library.BL2.To = Vector2.new(BL.X, BL.Y - offset)
+
+                    Library.BR1.From = Vector2.new(BR.X, BR.Y)
+                    Library.BR1.To = Vector2.new(BR.X - offset, BR.Y)
+                    Library.BR2.From = Vector2.new(BR.X, BR.Y)
+                    Library.BR2.To = Vector2.new(BR.X, BR.Y - offset)
+
+                    Vis(Library, true)
+
+                    if Settings.Autothickness then
+                        local distance = (Player.Character.HumanoidRootPart.Position - oripart.Position).magnitude
+                        local value = math.clamp(1/distance*100, 1, 4)
+                        for u, x in pairs(Library) do
+                            x.Thickness = value
+                        end
+                    else 
+                        for u, x in pairs(Library) do
+                            x.Thickness = Settings.Box_Thickness
+                        end
+                    end
+                else 
+                    Vis(Library, false)
+                end
+            else 
+                Vis(Library, false)
+                if game:GetService("Players"):FindFirstChild(plr.Name) == nil then
+                    for i, v in pairs(Library) do
+                        v:Remove()
+                        oripart:Destroy()
+                    end
+                    c:Disconnect()
+                end
+            end
+        end)
+    end
+
+    coroutine.wrap(Updater)()
+end
+
+local function EnableESP()
+    for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v.Name ~= Player.Name then
+            coroutine.wrap(Main)(v)
+        end
+    end
+
+    game:GetService("Players").PlayerAdded:Connect(function(newplr)
+        coroutine.wrap(Main)(newplr)
+    end)
+
+    local function ApplyESP(v)
+        if v.Character and v.Character:FindFirstChildOfClass'Humanoid' then
+            v.Character.Humanoid.NameDisplayDistance = 9e9
+            v.Character.Humanoid.NameOcclusion = "NoOcclusion"
+            v.Character.Humanoid.HealthDisplayDistance = 9e9
+            v.Character.Humanoid.HealthDisplayType = "AlwaysOn"
+            v.Character.Humanoid.Health = v.Character.Humanoid.Health -- triggers changed
+        end
+    end
+
+    for i, v in pairs(game.Players:GetPlayers()) do
+        ApplyESP(v)
+        v.CharacterAdded:Connect(function()
+            task.wait(0.33)
+            ApplyESP(v)
+        end)
+    end
+
+    game.Players.PlayerAdded:Connect(function(v)
+        ApplyESP(v)
+        v.CharacterAdded:Connect(function()
+            task.wait(0.33)
+            ApplyESP(v)
+        end)
+    end)
+end
+
+local function DisableESP()
+    for _, v in pairs(ESPObjects) do
+        v:Destroy()
+    end
+end
+
+-- Initial setup
+if espEnabled then
+    EnableESP()
+end
