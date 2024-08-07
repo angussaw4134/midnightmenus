@@ -1,0 +1,45 @@
+--MidnightMenus Rivals Internal v1.2.lua--
+
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({IntroText = "By Midnight Menus",Name = "Rivals Internal BETA", HidePremium = false, SaveConfig = true, ConfigFolder = "MidnightRivals"})
+
+local Tab = Window:MakeTab({
+	Name = "Beta / Testing",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+Tab:AddButton({
+	Name = "Test 1 ESP",
+	Callback = function()
+      		print("Aimbot On")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/Corneresp')))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = "Test 2 ESP",
+	Callback = function()
+      		print("button pressed")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/Corneresp')))()
+  	end    
+})
+
+Tab:AddButton({
+	Name = " Pistol Aimbot",
+	Callback = function()
+      		print("Aimbot On")
+              loadstring(game:HttpGet(('https://raw.githubusercontent.com/angussaw4134/midnightmenus/main/pis')))()
+  	end    
+})
+
+
+
+
+
+
+
+
+
+
+
